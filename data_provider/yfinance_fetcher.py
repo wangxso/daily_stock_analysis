@@ -740,7 +740,7 @@ class YfinanceFetcher(BaseFetcher):
             quote = UnifiedRealtimeQuote(
                 code=symbol,
                 name=name,
-                source=RealtimeSource.FALLBACK,
+                source=RealtimeSource.YFINANCE,
                 price=price,
                 change_pct=round(change_pct, 2) if change_pct is not None else None,
                 change_amount=round(change_amount, 4) if change_amount is not None else None,
@@ -765,6 +765,39 @@ class YfinanceFetcher(BaseFetcher):
         except Exception as e:
             logger.warning(f"[Yfinance] 获取美股 {stock_code} 实时行情失败: {e}，尝试 Stooq 兜底")
             return self._get_us_stock_quote_from_stooq(stock_code)
+
+    def get_belong_board(self, stock_code: str) -> list:
+        """
+        获取美股所属行业板块信息
+
+        Args:
+            stock_code: 美股代码，如 'NVDA', 'AAPL'
+
+        Returns:
+            板块信息列表，格式 [{"name": "行业名称", "type": "industry"}]
+        """
+        if not self._is_us_stock(stock_code):
+            return []
+
+        try:
+            import yfinance as yf
+            symbol = stock_code.strip().upper()
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+
+            boards = []
+            sector = info.get('sector')
+            industry = info.get('industry')
+
+            if sector:
+                boards.append({"name": sector, "type": "sector"})
+            if industry:
+                boards.append({"name": industry, "type": "industry"})
+
+            return boards
+        except Exception as e:
+            logger.debug(f"[Yfinance] 获取 {stock_code} 行业信息失败: {e}")
+            return []
 
 
 if __name__ == "__main__":

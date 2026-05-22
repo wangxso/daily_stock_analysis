@@ -282,11 +282,6 @@ class PortfolioRiskService:
         if cache_key in board_cache:
             return board_cache[cache_key]
 
-        if market != "cn":
-            coverage["unclassified_count"] += 1
-            board_cache[cache_key] = "UNCLASSIFIED"
-            return board_cache[cache_key]
-
         try:
             boards = self._fetch_belong_boards(symbol)
             sector_name = self._pick_primary_board_name(boards)
