@@ -658,6 +658,39 @@ class LongbridgeFetcher(BaseFetcher):
         )
         return quote
 
+    def get_belong_board(self, stock_code: str) -> list:
+        """
+        获取股票所属行业板块信息（通过 static_info 的 industry_classification）
+
+        Args:
+            stock_code: 股票代码
+
+        Returns:
+            板块信息列表，格式 [{"name": "行业名称", "type": "industry"}]
+        """
+        symbol = _to_longbridge_symbol(stock_code)
+        if symbol is None:
+            return []
+
+        static = self._get_static_info(symbol)
+        if static is None:
+            return []
+
+        boards = []
+        # 尝试获取行业分类信息
+        industry_class = getattr(static, "industry_classification", None)
+        if industry_class:
+            # industry_classification 可能是字符串或对象
+            if isinstance(industry_class, str):
+                boards.append({"name": industry_class, "type": "industry"})
+            else:
+                # 尝试获取 name 属性
+                name = getattr(industry_class, "name", None) or str(industry_class)
+                if name:
+                    boards.append({"name": name, "type": "industry"})
+
+        return boards
+
     # ------------------------------------------------------------------
     # BaseFetcher abstract methods (historical daily data)
     # ------------------------------------------------------------------
